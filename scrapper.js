@@ -4,12 +4,32 @@ const fs = require("fs");
 const json2csv = require("json2csv").Parser;
 
 
-const movies = ["https://www.imdb.com/title/tt0242519/",
-    "https://www.imdb.com/title/tt0112471/",
-    "https://www.imdb.com/title/tt0097165/"
-];
+const movies = [];
 
 (async () => {
+    try {
+        const res = await request({
+            uri: "https://www.imdb.com/chart/moviemeter",
+            headers: {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Accept-Encoding": "gzip, deflate, br",
+            },
+            gzip: true
+        });
+
+        let $ = cheerio.load(res)
+        // var list = $(".titleColumn>a").each(() => { return ($(this).attr("href")) });
+        var links = $(".titleColumn>a");
+        $(links).each((i, el) => {
+            movies.push(`https://www.imdb.com/${$(el).attr("href")}`);
+        });
+
+        movieScrap();
+    } catch (e) { console.log(e); }
+})();
+
+async function movieScrap() {
     let imdbData = [];
 
     for (let movie of movies) {
@@ -40,4 +60,4 @@ const movies = ["https://www.imdb.com/title/tt0242519/",
     const csv = jcsv.parse(imdbData);
 
     fs.writeFileSync("./imdb.csv", csv, "utf-8");
-})();
+}
